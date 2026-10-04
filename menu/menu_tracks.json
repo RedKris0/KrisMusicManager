@@ -1,0 +1,13 @@
+{
+	"menu_id": "shuffle_play_menu_tracks",
+	"title": "shuffle_play_menu_tracks_title",
+	"description": "shuffle_play_menu_tracks_desc",
+	"items": [
+        {
+            "type": "divider",
+            "id": "shuffle_play_dummy_divider",
+            "size": 8
+        }
+    ]
+}
+

@@ -1,0 +1,22 @@
+{
+    "menu_id": "krismm_main_menu",
+    "parent_menu_id": "blt_options",
+    "title": "krismm_menu_title",
+    "description": "krismm_menu_desc",
+    "items": [
+        {
+            "type": "button",
+            "id": "krismm_open_shuffle",
+            "title": "krismm_shuffle_title",
+            "description": "krismm_shuffle_desc",
+            "next_menu": "shuffle_play_menu"
+        },
+        {
+            "type": "button",
+            "id": "krismm_open_queue",
+            "title": "krismm_queue_title",
+            "description": "krismm_queue_desc",
+            "next_menu": "krismm_queue_menu"
+        }
+    ]
+}
