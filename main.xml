@@ -1,6 +1,6 @@
 <table name="Kris Music Manager" priority="1">
     
-    <AssetUpdates id="37959" version="0.1" provider="modworkshop"/>
+<AssetUpdates id="59369" version="0.5" provider="modworkshop"/>
     
     <AddFiles directory="assets">
         <png path="guis/textures/mods/Kmm/headphones"/>
