@@ -1,3 +1,14 @@
 <table name="Kris Music Manager" priority="1">
+    
     <AssetUpdates id="37959" version="0.1" provider="modworkshop"/>
+    
+    <AddFiles directory="assets">
+        <png path="guis/textures/mods/Kmm/headphones"/>
+    </AddFiles>
+
+    <Localization default="en.json" directory="loc">
+        <loc file="en.json" language="english"/>
+        <loc file="es.json" language="spanish"/>
+    </Localization>
+
 </table>

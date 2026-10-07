@@ -17,6 +17,13 @@
             "title": "krismm_queue_title",
             "description": "krismm_queue_desc",
             "next_menu": "krismm_queue_menu"
+        },
+        {
+            "type": "button",
+            "id": "krismm_open_hud",
+            "title": "krismm_hud_title",
+            "description": "krismm_hud_desc",
+            "next_menu": "krismm_hud_menu"
         }
     ]
 }
