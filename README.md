@@ -1,20 +1,60 @@
-# Kris Music Manager (KMM) for Payday 2 
-Tired of hearing the same track loop during long assaults or having to open the pause menu to manually change the song? **Kris Music Manager** revolutionizes how you experience music in Payday 2.
-## Main Features 
-- **Shuffle Play:** Select your favorite tracks (supports both base game and custom modded tracks) and the mod will randomly switch the song every time a new assault wave begins. Say goodbye to repetitive music!
-- **Live Song Queue:** Craving a specific track for the next assault? Use the Queue feature to queue up the next song on the fly.
-- **Custom Keybinds:** Access the Queue menu or instantly toggle Shuffle Play ON/OFF right in the middle of a heist using custom hotkeys. (Configurable in `Options -> Mod Keybinds`).
-- **In-Game HUD Feedback:** On-screen hint notifications confirm exactly which track you just queued or when you toggle the shuffle mode.
-- **Bilingual Support:** Fully translated into both English and Spanish.
-## Installation 
-1. Ensure you have [SuperBLT](https://superblt.znix.xyz/) installed.
-2. Download the `.zip` file from the [Releases] tab or from ModWorkshop.
-3. Extract the folder inside the `.zip` directly into your `PAYDAY 2/mods/` directory.
-4. *(Optional)* Go to `Options -> Mod Keybinds` in-game to assign your quick hotkeys.
-## How to use 
-- Go to `Options -> Mod Options -> KrisMusicManager`.
-- Toggle the tracks you want to include in the shuffle rotation.
-- Choose how frequently you want the music to shuffle (e.g., every 1 assault wave).
-- During a heist, use your custom keybind to quickly open the **Queue** menu and pick your favorite track for the next epic moment.
+# Kris Music Manager (KMM)
+
+**Take full control of your heist soundtrack in real-time!**
+
+Tired of hearing the exact same track looping during a 30-minute heist? **Kris Music Manager (KMM)** completely revamps how music works during loud heists, giving you a dynamic, randomized, and fully customizable soundtrack experience complete with a **live queue system**, **on-the-fly track controls**, and a **custom in-game HUD banner**!
+
 ---
-*Created by RedKris.*
+
+## 🌟 Core Features
+
+* 🔀 **Advanced Dynamic Shuffle:** Shuffles your music dynamically between assault waves. Say goodbye to repetitive music during long heists!
+* ⏱️ **Custom Shuffle Frequency:** You decide when the music changes! Set it to change every single assault wave, or every 2, 3, 4+ assaults.
+* ⏭️ **Instant Skip & Previous Controls:** Want to change the tune right now? Use dedicated hotkeys to immediately **Skip** to the next track or jump back to the **Previous** track without opening the pause menu.
+* 🎧 **Sleek In-Game Music HUD Banner:** Displays a stylish toast notification with a custom headphone icon and song title whenever a new track starts playing.
+* 🎨 **Fully Customizable HUD:** Fine-tune banner screen position (X/Y offsets), scale, display duration, and fade animations directly in the Mod Options menu.
+* 📋 **Live Song Queue System:** Craving a specific track for the upcoming wave? Open the in-game Queue menu, select your favorite track (e.g., *Razormind*), and it is guaranteed to play on the very next assault before returning smoothly to your shuffle rotation.
+* 🚫 **Track Blacklisting:** Don't like a specific song? Go to Mod Options and selectively enable or disable any Base Game or Custom (modded) track from your shuffle pool.
+* 🌐 **Full Bilingual Support:** Complete localization in both **English** and **Spanish**.
+
+---
+
+## ⌨️ Configurable Keybinds
+Set your custom hotkeys under `Options -> Mod Keybinds`:
+* **Open Queue Menu:** Pick which track plays on the next assault.
+* **Skip Current Track:** Immediately transitions to the next track.
+* **Previous Track:** Returns to the previously played song.
+* **Toggle Shuffle Play:** Turn dynamic shuffling ON or OFF on the fly.
+
+---
+
+## 📦 Requirements
+1. [SuperBLT](https://superblt.znix.xyz/)
+2. [BeardLib](https://modworkshop.net/mod/14924) *(Required for custom textures and automatic updates)*
+
+---
+
+## 📥 Installation
+1. Download the `.zip` archive.
+2. Extract the folder into your `PAYDAY 2/mods/` directory.
+3. Launch PAYDAY 2 and configure your keybinds under `Options -> Mod Keybinds`.
+
+---
+
+## 🎮 How to Use
+1. Go to `Options -> Mod Options -> KrisMusicManager`.
+2. Select which tracks you want in your shuffle pool.
+3. Set your desired **Change Frequency** (e.g., every 1 assault wave).
+4. Configure your **HUD Options** (banner position, display duration, scale).
+5. During any heist, use your configured keybinds to Skip, go to Previous track, or open the Queue menu!
+
+---
+
+## ⚠️ Known Issues / Engine Limitations
+* **Micro-stutters during track transitions:** Due to how the PAYDAY 2 engine streams audio banks from disk, you may experience a brief micro-stutter when a new track loads during an assault transition. This is a known engine-level limitation.
+
+---
+
+## ❤️ Credits
+* Heavily expanded, rewritten, and modernized from the original [Shuffle Play](https://modworkshop.net/mod/37959) mod. Huge thanks to the original author for the foundational shuffle concept!
+* Created by **RedKris**.
