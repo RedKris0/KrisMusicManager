@@ -51,28 +51,52 @@ local function load_shuffle_play_localization(loc)
     loc = loc or (managers and managers.localization)
     if not loc then return end
 
-    local lang = (shuffle_play.save_data and shuffle_play.save_data.shuffle_play_language) or 1
-    if not shuffle_play.save_data or not shuffle_play.save_data.shuffle_play_language then
+    if shuffle_play and shuffle_play.load_localization then
+        shuffle_play.load_localization(loc)
+        return
+    end
+
+    local lang = (shuffle_play.save_data and shuffle_play.save_data.shuffle_play_language)
+    if not lang then
         local file = io.open(shuffle_play.save_path, "r")
         if file then
             local content = file:read("*all")
+            file:close()
             if content and content ~= "" then
-                local ok, data = pcall(function() return json.decode(content) end)
-                if ok and data and data.shuffle_play_language then
-                    lang = data.shuffle_play_language
+                if string.find(content, '"shuffle_play_language"%s*:%s*2') then
+                    lang = 2
+                elseif string.find(content, '"shuffle_play_language"%s*:%s*1') then
+                    lang = 1
+                elseif type(json) == "table" and json.decode then
+                    local ok, data = pcall(function() return json.decode(content) end)
+                    if ok and data and data.shuffle_play_language then
+                        lang = tonumber(data.shuffle_play_language)
+                    end
                 end
             end
-            file:close()
         end
     end
 
-    local mod_path = shuffle_play.mod_path or ModPath or "mods/Shuffle Play/"
+    if not lang or lang == 0 then
+        if SystemInfo and SystemInfo.language then
+            local sys_lang = SystemInfo:language()
+            if sys_lang == Idstring("spanish") or sys_lang == Idstring("es") then
+                lang = 2
+            else
+                lang = 1
+            end
+        else
+            lang = 1
+        end
+    end
+
+    local mod_path = shuffle_play.mod_path or ModPath or "mods/Kris Music Manager/"
     local en_path = mod_path .. "loc/en.json"
     local es_path = mod_path .. "loc/es.json"
     local test_f = io.open(en_path, "r")
     if not test_f then
-        en_path = "mods/Shuffle Play/loc/en.json"
-        es_path = "mods/Shuffle Play/loc/es.json"
+        en_path = "mods/Kris Music Manager/loc/en.json"
+        es_path = "mods/Kris Music Manager/loc/es.json"
     else
         test_f:close()
     end
@@ -108,6 +132,15 @@ function MenuCallbackHandler:krismm_banner_align_callback(item)
     shuffle_play.save_data.krismm_banner_align = item:value() == "on"
     shuffle_play:save()
     if managers.hud and managers.hud._kris_music_hud then
+        managers.hud._kris_music_hud:update_position()
+    end
+end
+
+function MenuCallbackHandler:krismm_banner_uppercase_callback(item)
+    shuffle_play.save_data.krismm_banner_uppercase = (item:value() == "on")
+    shuffle_play:save()
+    if managers.hud and managers.hud._kris_music_hud then
+        managers.hud._kris_music_hud._force_text_refresh = true
         managers.hud._kris_music_hud:update_position()
     end
 end
@@ -221,12 +254,6 @@ function MenuCallbackHandler:krismm_queue_track_callback(item)
         local msg = managers.localization:text("krismm_queued_msg") .. track_name
         managers.chat:_receive_message(1, "KrisMusicManager", msg, tweak_data.system_chat_color)
         
-        if managers.hud and managers.hud.show_kris_music_banner then
-            local text_list = {
-                managers.localization:to_upper_text("krismm_upcoming_song", {track = track_name})
-            }
-            managers.hud:show_kris_music_banner(text_list, 10, Color(1, 0.8, 0.2))
-        end
         if managers.hud then
             managers.hud:show_hint({text = msg, time = 3})
         elseif BLT and BLT.Notifications then
@@ -275,6 +302,7 @@ Hooks:Add("MenuManagerInitialize", "MenuManagerInitialize_shuffle_play", functio
 	MenuCallbackHandler.shuffle_play_language_callback = function(self, item)
 		shuffle_play.save_data.shuffle_play_language = tonumber(item:value())
 		shuffle_play:save()
+		load_shuffle_play_localization(managers.localization)
 	end
 
 	MenuCallbackHandler.shuffle_play_no_repeat_callback = function(self, item)
@@ -322,16 +350,14 @@ Hooks:Add("MenuManagerPopulateCustomMenus", "MenuManagerPopulateCustomMenus_shuf
     
     -- Populate HUD Menu
     MenuHelper:AddToggle({ id="krismm_show_banner", title="krismm_show_banner_title", desc="krismm_show_banner_desc", callback="krismm_show_banner_callback", value=(shuffle_play.save_data.krismm_show_banner_toggled ~= false), menu_id="krismm_hud_menu", localized=true, priority=1000 })
-    
     MenuHelper:AddToggle({ id="krismm_banner_align", title="krismm_banner_align_title", desc="krismm_banner_align_desc", callback="krismm_banner_align_callback", value=(shuffle_play.save_data.krismm_banner_align == true), menu_id="krismm_hud_menu", localized=true, priority=999 })
-    
-    MenuHelper:AddSlider({ id="krismm_banner_hue", title="krismm_banner_hue_title", desc="krismm_banner_hue_desc", callback="krismm_banner_hue_callback", value=shuffle_play.save_data.krismm_banner_hue or 0, min=0, max=360, step=1, show_value=true, menu_id="krismm_hud_menu", localized=true, priority=998 })
-    MenuHelper:AddSlider({ id="krismm_banner_sat", title="krismm_banner_sat_title", desc="krismm_banner_sat_desc", callback="krismm_banner_sat_callback", value=shuffle_play.save_data.krismm_banner_sat or 0, min=0, max=100, step=1, show_value=true, menu_id="krismm_hud_menu", localized=true, priority=998 })
-
-    MenuHelper:AddSlider({ id="krismm_banner_x", title="krismm_banner_x_title", desc="krismm_banner_x_desc", callback="krismm_banner_x_callback", value=shuffle_play.save_data.krismm_banner_x or 0, min=-1000, max=1000, step=5, show_value=true, menu_id="krismm_hud_menu", localized=true, priority=996 })
-    MenuHelper:AddButton({ id="krismm_reset_x", title="krismm_reset_x_title", desc="krismm_reset_x_desc", callback="krismm_reset_x_callback", menu_id="krismm_hud_menu", localized=true, priority=995 })
-    MenuHelper:AddSlider({ id="krismm_banner_y", title="krismm_banner_y_title", desc="krismm_banner_y_desc", callback="krismm_banner_y_callback", value=shuffle_play.save_data.krismm_banner_y or 0, min=-1000, max=1000, step=5, show_value=true, menu_id="krismm_hud_menu", localized=true, priority=994 })
-    MenuHelper:AddButton({ id="krismm_reset_y", title="krismm_reset_y_title", desc="krismm_reset_y_desc", callback="krismm_reset_y_callback", menu_id="krismm_hud_menu", localized=true, priority=993 })
+    MenuHelper:AddToggle({ id="krismm_banner_uppercase", title="krismm_banner_uppercase_title", desc="krismm_banner_uppercase_desc", callback="krismm_banner_uppercase_callback", value=(shuffle_play.save_data.krismm_banner_uppercase ~= false), menu_id="krismm_hud_menu", localized=true, priority=998 })
+    MenuHelper:AddSlider({ id="krismm_banner_hue", title="krismm_banner_hue_title", desc="krismm_banner_hue_desc", callback="krismm_banner_hue_callback", value=shuffle_play.save_data.krismm_banner_hue or 0, min=0, max=360, step=1, show_value=true, menu_id="krismm_hud_menu", localized=true, priority=997 })
+    MenuHelper:AddSlider({ id="krismm_banner_sat", title="krismm_banner_sat_title", desc="krismm_banner_sat_desc", callback="krismm_banner_sat_callback", value=shuffle_play.save_data.krismm_banner_sat or 0, min=0, max=100, step=1, show_value=true, menu_id="krismm_hud_menu", localized=true, priority=996 })
+    MenuHelper:AddSlider({ id="krismm_banner_x", title="krismm_banner_x_title", desc="krismm_banner_x_desc", callback="krismm_banner_x_callback", value=shuffle_play.save_data.krismm_banner_x or 0, min=-1000, max=1000, step=5, show_value=true, menu_id="krismm_hud_menu", localized=true, priority=995 })
+    MenuHelper:AddButton({ id="krismm_reset_x", title="krismm_reset_x_title", desc="krismm_reset_x_desc", callback="krismm_reset_x_callback", menu_id="krismm_hud_menu", localized=true, priority=994 })
+    MenuHelper:AddSlider({ id="krismm_banner_y", title="krismm_banner_y_title", desc="krismm_banner_y_desc", callback="krismm_banner_y_callback", value=shuffle_play.save_data.krismm_banner_y or 0, min=-1000, max=1000, step=5, show_value=true, menu_id="krismm_hud_menu", localized=true, priority=993 })
+    MenuHelper:AddButton({ id="krismm_reset_y", title="krismm_reset_y_title", desc="krismm_reset_y_desc", callback="krismm_reset_y_callback", menu_id="krismm_hud_menu", localized=true, priority=992 })
     
     MenuHelper:AddButton({ id="shuffle_play_menu_tracks_base_btn", title="shuffle_play_menu_tracks_base_title", desc="shuffle_play_menu_tracks_base_desc", next_node="shuffle_play_menu_tracks_base", menu_id="shuffle_play_menu", localized=true, priority=994 })
     MenuHelper:AddButton({ id="shuffle_play_menu_tracks_custom_btn", title="shuffle_play_menu_tracks_custom_title", desc="shuffle_play_menu_tracks_custom_desc", next_node="shuffle_play_menu_tracks_custom", menu_id="shuffle_play_menu", localized=true, priority=993 })
@@ -405,8 +431,12 @@ Hooks:Add("MenuManagerBuildCustomMenus", "MenuManagerBuildCustomMenus_shuffle_pl
     nodes["krismm_queue_tracks_custom"] = MenuHelper:BuildMenu("krismm_queue_tracks_custom")
     
     local hud_menu = MenuHelper:BuildMenu("krismm_hud_menu")
-    hud_menu:parameters().hide_bg = true
-    nodes["krismm_hud_menu"] = hud_menu
+    if hud_menu then
+        if hud_menu.parameters and hud_menu:parameters() then
+            hud_menu:parameters().hide_bg = true
+        end
+        nodes["krismm_hud_menu"] = hud_menu
+    end
 end)
 
 Hooks:Add("MenuUpdate", "MenuUpdate_shuffle_play_save", function(t, dt)
@@ -415,10 +445,23 @@ Hooks:Add("MenuUpdate", "MenuUpdate_shuffle_play_save", function(t, dt)
     end
 end)
 
-
-
-
-
-
-
-
+Hooks:Add("MenuManagerInitialize", "MenuManagerInitialize_KrisMM_track_choices", function(menu_manager)
+    if rawget(_G, "MenuCallbackHandler") then
+        local music_cbs = { "choice_mission_assets_music", "choice_job_music", "choice_crimenet_music", "choice_jukebox_music" }
+        for _, cb in ipairs(music_cbs) do
+            if MenuCallbackHandler[cb] then
+                Hooks:PostHook(MenuCallbackHandler, cb, "KrisMM_track_choice_" .. cb, function(self, item)
+                    if item and item.value then
+                        local track = item:value()
+                        if track and track ~= "default" and track ~= "heist" and track ~= "ghost" and track ~= "" then
+                            shuffle_play.prep_fixed_track = track
+                            log("[KrisMM] Selected fixed music via " .. cb .. ": " .. tostring(track))
+                        else
+                            shuffle_play.prep_fixed_track = nil
+                        end
+                    end
+                end)
+            end
+        end
+    end
+end)

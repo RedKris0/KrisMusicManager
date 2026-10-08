@@ -7,7 +7,7 @@ if not KrisMusicHUD then
 
     local function ensure_headphones_texture()
         if DB and DB.create_entry and not DB:has(ids_texture, ids_headphones) then
-            local mod_dir = (shuffle_play and shuffle_play.mod_path) or "mods/Shuffle Play/"
+            local mod_dir = ModPath or (shuffle_play and shuffle_play.mod_path) or "mods/Kris Music Manager/"
             local full_path = mod_dir .. "assets/" .. texture_path .. ".png"
             if SystemFS and SystemFS.exists and SystemFS:exists(full_path) then
                 DB:create_entry(ids_texture, ids_headphones, full_path)
@@ -132,9 +132,17 @@ if not KrisMusicHUD then
             return
         end
 
-        local color = override_color or self._color
-        self._is_upcoming = (override_color ~= nil)
+        local color = self._color
+        if type(override_color) == "userdata" then
+            color = override_color
+            self._is_upcoming = true
+        else
+            self._is_upcoming = false
+        end
 
+        if type(color) ~= "userdata" then
+            color = self._color or Color(1, 1, 1)
+        end
         self._current_text_list = text_list
         self._current_color = color
 
@@ -227,6 +235,14 @@ if not KrisMusicHUD then
         local padding = 10
         local speed = 90
 
+        local function safe_upper(str)
+            if not str or type(str) ~= "string" then return "" end
+            if utf8 and utf8.to_upper then
+                return utf8.to_upper(str)
+            end
+            return string.upper(str)
+        end
+
         local function get_align_right()
             return (shuffle_play and shuffle_play.save_data and shuffle_play.save_data.krismm_banner_align == true)
         end
@@ -236,6 +252,10 @@ if not KrisMusicHUD then
             local text_string = text_list[current_string_idx] or ""
 
             current_string_idx = current_string_idx % #text_list + 1
+            local uppercase = (shuffle_play and shuffle_play.save_data and shuffle_play.save_data.krismm_banner_uppercase ~= false)
+            if uppercase and text_string and text_string ~= "" then
+                text_string = safe_upper(text_string)
+            end
 
             local text = tp:text({
                 vertical = "center",
@@ -395,14 +415,13 @@ Hooks:PostHook(HUDManager, "_setup_player_info_hud_pd2", "KrisMusicHUD_setup", f
             self:show_kris_music_banner(self._cached_music_banner.text_list, self._cached_music_banner.color)
             self._cached_music_banner = nil
         else
-            -- Otherwise display current track banner if a track is already active
-            local cur_track = (shuffle_play.get_current_track and shuffle_play.get_current_track()) or (Global.music_manager and Global.music_manager.current_track)
+            local cur_track = (shuffle_play and shuffle_play.prep_fixed_track) or (shuffle_play and shuffle_play.get_current_track and shuffle_play.get_current_track()) or (Global.music_manager and Global.music_manager.current_track)
             if cur_track and shuffle_play and shuffle_play.get_track_name then
                 local track_name = shuffle_play.get_track_name(cur_track)
-                local text_list = {
-                    managers.localization:to_upper_text("krismm_now_playing", {track = track_name})
-                }
-                self:show_kris_music_banner(text_list)
+                if track_name and track_name ~= "" then
+                    local text = managers.localization:text("krismm_now_playing", {track = track_name})
+                    self:show_kris_music_banner({text})
+                end
             end
         end
     else
@@ -410,45 +429,24 @@ Hooks:PostHook(HUDManager, "_setup_player_info_hud_pd2", "KrisMusicHUD_setup", f
     end
 
     if shuffle_play then
+        shuffle_play.heist_started = nil
         shuffle_play.wave_counter = 0
         shuffle_play._upcoming_banner_shown = nil
         shuffle_play.last_stage = nil
         if not shuffle_play.next_track then
             shuffle_play.prepare_next_track()
         end
-
-        if DelayedCalls then
-            DelayedCalls:Add("KrisMM_delayed_heist_start_check", 0.6, function()
-                if shuffle_play then
-                    local is_enabled = shuffle_play.save_data and shuffle_play.save_data.shuffle_play_enable_toggled
-                    if is_enabled ~= false then
-                        if shuffle_play.queue and #shuffle_play.queue > 0 and not shuffle_play.heist_started and shuffle_play.set_random_track then
-                            shuffle_play.heist_started = true
-                            shuffle_play.set_random_track()
-                        else
-                            shuffle_play.heist_started = true
-                            if managers.hud and managers.hud._kris_music_hud and not managers.hud._kris_music_hud._active then
-                                local cur_track = (shuffle_play.get_current_track and shuffle_play.get_current_track()) or (Global.music_manager and Global.music_manager.current_track)
-                                if cur_track and shuffle_play.get_track_name then
-                                    local track_name = shuffle_play.get_track_name(cur_track)
-                                    local text_list = {
-                                        managers.localization:to_upper_text("krismm_now_playing", {track = track_name})
-                                    }
-                                    managers.hud:show_kris_music_banner(text_list)
-                                end
-                            end
-                            if not shuffle_play.next_track and shuffle_play.prepare_next_track then
-                                shuffle_play.prepare_next_track()
-                            end
-                        end
-                    end
-                end
-            end)
-        end
     end
 end)
 
-function HUDManager:show_kris_music_banner(text_list, color)
+function HUDManager:show_kris_music_banner(text_list, arg2, arg3)
+    local color = nil
+    if type(arg2) == "userdata" then
+        color = arg2
+    elseif type(arg3) == "userdata" then
+        color = arg3
+    end
+
     if not self._kris_music_hud then
         self._cached_music_banner = { text_list = text_list, color = color }
         return

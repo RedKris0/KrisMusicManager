@@ -10,18 +10,18 @@ shuffle_play.history = shuffle_play.history or {}
 
 function shuffle_play.get_current_track()
     local track = Global.music_manager and Global.music_manager.current_track
-    if not track or track == "default" then
-        if managers.music and managers.music._current_track and managers.music._current_track ~= "default" then
+    if not track or track == "default" or track == "heist" or track == "ghost" then
+        if managers.music and managers.music._current_track and managers.music._current_track ~= "default" and managers.music._current_track ~= "heist" and managers.music._current_track ~= "ghost" then
             track = managers.music._current_track
-        elseif Global.level_data and Global.level_data.level_id and tweak_data and tweak_data.levels and tweak_data.levels[Global.level_data.level_id] then
-            track = tweak_data.levels[Global.level_data.level_id].music
+        else
+            track = nil
         end
     end
     return track
 end
 
 function shuffle_play.get_track_name(track_id)
-    if not track_id then return "Unknown" end
+    if not track_id or track_id == "heist" or track_id == "ghost" or track_id == "default" or track_id == "" then return "" end
     if CustomOST and CustomOST.track_manager then
         local cost_track = CustomOST.track_manager:get_track(track_id)
         if cost_track and cost_track.get_name then
@@ -75,12 +75,19 @@ if rawget(_G, "Setup") and Setup.init_managers then
     local Setup_init_managers_original = Setup.init_managers
     function Setup:init_managers(...)
         Setup_init_managers_original(self, ...)
+        shuffle_play.heist_started = nil
+        shuffle_play.wave_counter = 0
+        shuffle_play._upcoming_banner_shown = nil
+        shuffle_play._track_switched_in_game = nil
         shuffle_play.tracks = shuffle_play.get_loaded_tracks()
         shuffle_play.prepare_next_track()
     end
 end
 
 Hooks:Add("MenuManagerInitialize", "MenuManagerInitialize_shuffle_play_init", function(menu_manager)
+    shuffle_play.prep_fixed_track = nil
+    shuffle_play._track_switched_in_game = nil
+    if Global.music_manager then Global.music_manager.current_track = nil end
     if not shuffle_play.tracks or #shuffle_play.tracks == 0 then
         shuffle_play.tracks = shuffle_play.get_loaded_tracks()
         shuffle_play.prepare_next_track()
@@ -277,7 +284,6 @@ function shuffle_play.get_current_event()
 end
 
 function shuffle_play.set_random_track(forced_event, specific_track, is_rewind)
-    if shuffle_play.save_data and shuffle_play.save_data.shuffle_play_enable_toggled == false then return end
 
     if shuffle_play._in_set_random_track then
         return
@@ -308,7 +314,9 @@ function shuffle_play.set_random_track(forced_event, specific_track, is_rewind)
     end
 
     if not track_to_play then
-        shuffle_play._in_set_random_track = false
+    shuffle_play._track_switched_in_game = true
+    shuffle_play.prep_fixed_track = nil
+    shuffle_play._in_set_random_track = false
         return
     end
 
@@ -329,6 +337,10 @@ function shuffle_play.set_random_track(forced_event, specific_track, is_rewind)
     shuffle_play.prepare_next_track()
 
     -- 4. Clean Audio Switch: stop previous custom or vanilla sounds
+    if Global.music_manager and Global.music_manager.source then
+        Global.music_manager.source:stop()
+        Global.music_manager.source:post_event("stop_all_music")
+    end
     if managers.music then
         if managers.music.stop then
             pcall(function() managers.music:stop() end)
@@ -410,18 +422,17 @@ function shuffle_play.set_random_track(forced_event, specific_track, is_rewind)
 
     -- 6. HUD Notification Banner (Permanent, updates text & color)
     local track_name = shuffle_play.get_track_name(track_to_play)
-    if managers.hud and managers.hud.show_kris_music_banner then
-        local text_list = {
-            managers.localization:to_upper_text("krismm_now_playing", {track = track_name})
-        }
-        managers.hud:show_kris_music_banner(text_list)
+    if managers.hud and managers.hud.show_kris_music_banner and track_name and track_name ~= "" then
+        local text = managers.localization:text("krismm_now_playing", {track = track_name})
+        managers.hud:show_kris_music_banner({text})
     end
 
+    shuffle_play._track_switched_in_game = true
+    shuffle_play.prep_fixed_track = nil
     shuffle_play._in_set_random_track = false
 end
 
 function shuffle_play.play_previous_track()
-    if shuffle_play.save_data and shuffle_play.save_data.shuffle_play_enable_toggled == false then return end
 
     if not shuffle_play.history or #shuffle_play.history == 0 then
         if managers.hud then
@@ -478,12 +489,9 @@ function shuffle_play.trigger_upcoming_banner()
     if shuffle_play.next_track and shuffle_play.get_track_name then
         local track_to_play = shuffle_play.next_track
         local track_name = shuffle_play.get_track_name(track_to_play)
-        if managers.hud and managers.hud.show_kris_music_banner then
-            local text_list = {
-                managers.localization:to_upper_text("krismm_upcoming_song", {track = track_name})
-            }
-            -- Warning yellow color (Color(1, 0.8, 0.2)) as in assault indicator
-            managers.hud:show_kris_music_banner(text_list, Color(1, 0.8, 0.2))
+        if managers.hud and managers.hud.show_kris_music_banner and track_name and track_name ~= "" then
+            local text = managers.localization:text("krismm_upcoming_song", {track = track_name})
+            managers.hud:show_kris_music_banner({text}, Color(1, 0.8, 0.2))
         end
     end
 end
